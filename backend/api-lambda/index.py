@@ -48,7 +48,8 @@ def handler(event, context):
     keys = params_full_list.pop("keys")
     lang = params_full_list.get("lang")
     # Only required for lookup tables
-    table_params = (tables, lang)
+    table_update = {'generic': {}, 'province': {}}  # missing codes from tables
+    table_params = (tables, lang, table_update)
     # services to call
     for service_id in keys:
         # The schema for this service
@@ -64,6 +65,13 @@ def handler(event, context):
                                    output_schema_items,
                                    service_load)
         loads.extend(items)
+
+    # write csv files if table updated 
+    for table_name in table_update:
+        if any(table_update[table_name]):
+            print(table_name, ' table updates:', table_update[table_name])
+            geolocator.write_table(table_name, tables)
+
     response = {
         "statusCode": 200,
         "headers": {

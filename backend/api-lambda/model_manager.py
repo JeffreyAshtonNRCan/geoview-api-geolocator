@@ -4,6 +4,9 @@ import lambda_multiprocessing
 from url_methods import *
 from constants import *
 
+# tables from json service url 
+service_tables = {'generic': {}, 'province': {}} 
+
 def get_from_schema(schema, item):
     """
     Get the data value asociated with an specific field from a data item
@@ -40,10 +43,62 @@ def get_from_table(table_params, field, item):
     Return:
         The string corresponding to that table, code, language
     """
-    tables, lang = table_params
+    tables, lang, table_update = table_params
     code = get_from_schema(field, item)
     table_name = field.split('.')[0]
-    return tables.get(table_name).get(code).get(lang)
+    if code in tables.get(table_name):
+       return tables.get(table_name).get(code).get(lang)
+    
+    # missing code in table
+    term_en = get_table_code(tables, table_name, code, 'en')
+    term_fr = get_table_code(tables, table_name, code, 'fr')
+    term = {'en' : term_en, 'fr' : term_fr}
+    
+    #add missing code to table
+    if term_en != 'undefined' and term_fr != 'undefined':
+        tables[table_name][code] = term  
+        table_update[table_name][code] = term
+
+    return term.get(lang)
+
+def get_table_code(tables, table_name, code, lang):
+    """
+    get missing code definition from service url  
+    
+    Params:
+      tables: The lookup tables
+      table_name: name of table, generic, province or tableurl
+      code: The missing code
+      lang: The lang of the missing code
+    Return:
+        The term or description of the missing code for the lang 
+    """
+    
+    if lang not in service_tables[table_name]:   
+        if 'tableurl' in tables:  
+            table_url = tables.get('tableurl').get(table_name).get(lang)
+            print(table_name, 'table', lang, 'update url=', table_url)
+            try:
+                params = None
+                service_tables[table_name][lang] = url_request(table_url, params)
+            except Exception as error:
+                print("An exception occurred:", type(error).__name__)
+                print('Error=', error, ' url:', table_url)
+                return 'undefined'
+        else: 
+            print('tableurl.csv missing from S3 bucket')
+            return 'undefined'
+
+    if 'definitions' in service_tables[table_name][lang]:
+        definitions = service_tables[table_name][lang].get('definitions')
+        for definition in definitions:
+            if definition.get('code') == code:
+                if table_name == 'province':
+                    return definition.get('description')
+                else:
+                    return definition.get('term')
+
+    return 'undefined'
 
 def get_from_array(schema, lookup, item):
     """

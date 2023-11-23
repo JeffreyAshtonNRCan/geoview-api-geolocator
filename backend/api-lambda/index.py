@@ -66,7 +66,7 @@ def handler(event, context):
                                    service_load)
         loads.extend(items)
 
-    # write csv files if table updated 
+    # write csv files if table updated
     for table_name in table_update:
         if any(table_update[table_name]):
             print(table_name, ' table updates:', table_update[table_name])

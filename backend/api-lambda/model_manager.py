@@ -50,6 +50,7 @@ def get_from_table(table_params, field, item):
        return tables.get(table_name).get(code).get(lang)
 
     # missing code in table
+    print('missing code=', code, ' lang=', lang)
     term_en = get_table_code(tables, table_name, code, 'en')
     term_fr = get_table_code(tables, table_name, code, 'fr')
     term = {'en' : term_en, 'fr' : term_fr}
@@ -72,6 +73,10 @@ def get_table_code(tables, table_name, code, lang):
     Return:
         The term or description of the missing code for the lang 
     """
+
+    if table_name not in service_tables:
+        return 'undefined'
+
     if lang not in service_tables[table_name]:
         if 'tableurl' in tables:
             table_url = tables.get('tableurl').get(table_name).get(lang)
@@ -155,6 +160,36 @@ def get_average(schema, index_list, item):
         total += item_array[ndx]
     return total/addends
 
+def get_from_csv(table_params, field, lookup, item):
+    """
+    Search for province name in csv string
+    Start search at end of csv string
+
+    Params:
+      field: The schema or field name
+      lookup: the number of fields in the csv string to search
+      item: the data record
+    Return:
+        The province name matching csv item
+    """
+    tables, lang, table_update = table_params
+    item_value = get_from_schema(field, item)
+    item_list = item_value.split(',')
+    item_list.reverse() # search from end of csv string
+    search_range = int(lookup.get("field"))
+
+    if 'component' in tables:
+        provinces = tables.get('component')
+        for province in provinces:
+            province_name = provinces.get(province).get(lang)
+            if province_name:
+                for key in range(search_range):
+                    if key < len(item_list):
+                        if province_name in item_list[key]:
+                            return province_name
+
+    return 'undefined'
+
 def function_error():
     """
     Return:
@@ -198,6 +233,8 @@ def get_function_from_schema(schema, item):
         return get_average
     elif schema_type == "url":
         return get_from_url
+    elif schema_type == "csv":
+        return get_from_csv
     else:
         return function_error
 
@@ -239,6 +276,10 @@ def get_results(table_params, function_field, item):
         field = item_schema.get("field")
         ndx_list = item_schema.get("lookup").get("at")
         return function(field, ndx_list, item)
+    elif "get_from_csv" in function.__name__:
+        field = item_schema.get("field")
+        lookup = item_schema.get("lookup")
+        return function(table_params, field, lookup, item)
     elif "function_null" in function.__name__:
         return function()
     else:

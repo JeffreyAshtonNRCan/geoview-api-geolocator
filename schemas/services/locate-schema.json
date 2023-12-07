@@ -40,7 +40,10 @@
                 },
                 "province": {
                     "field": "component.province",
-                    "lookup": ""
+                    "lookup": {
+                        "type": "table",
+                        "field": "description"
+                    }
                 },
                 "tag": [
                     {

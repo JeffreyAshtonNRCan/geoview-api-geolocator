@@ -59,8 +59,11 @@
                 }
             ],
             "province": {
-                "field": "",
-                "lookup": ""
+                "field": "display_name",
+                "lookup": {
+                    "type": "csv",
+                    "field":"3"
+                }
             },
             "tag": {
                     "field": "class",

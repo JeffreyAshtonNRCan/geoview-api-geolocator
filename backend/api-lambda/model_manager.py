@@ -46,6 +46,11 @@ def get_from_table(table_params, field, item):
     tables, lang, table_update = table_params
     code = get_from_schema(field, item)
     table_name = field.split('.')[0]
+    field_name = field.split('.')[1]
+    # component.generic use generic lookup table
+    if table_name == 'component' and field_name == 'generic':
+        table_name = 'generic'
+
     if code in tables.get(table_name):
        return tables.get(table_name).get(code).get(lang)
 

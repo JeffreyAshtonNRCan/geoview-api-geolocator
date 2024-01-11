@@ -234,6 +234,8 @@ def get_from_type(table_params, field, lookup, item):
             return get_from_schema(field, item)
         elif item_type == "NTS":
             return get_from_schema('title', item)
+        elif item_type == "PostalCode":
+            return get_from_schema('component.code', item)
         else:
             streetname = get_from_schema('component.streetname', item)
             placename = get_from_schema('component.placename', item)
@@ -250,10 +252,8 @@ def get_from_type(table_params, field, lookup, item):
         else:
             return 'undefined'
     else:
-        # category table lookup french only
-        if lang == 'fr':
-            if item_type.lower() in tables.get('category'):
-                item_type = tables.get('category').get(item_type.lower()).get(lang)
+        if item_type.lower() in tables.get('category'):
+            item_type = tables.get('category').get(item_type.lower()).get(lang)
         return item_type
 
 

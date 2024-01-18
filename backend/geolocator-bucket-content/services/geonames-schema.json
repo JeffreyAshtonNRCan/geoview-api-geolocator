@@ -38,7 +38,21 @@
                     "field": "name",
                     "lookup": ""
                 },
-                "lat": {
+                "province": {
+                    "field": "province.code",
+                    "lookup": {
+                        "type": "table",
+                        "field": "description"
+                    }
+                },
+                "category": {
+                    "field": "generic.code",
+                    "lookup": {
+                        "type": "table",
+                        "field": "term"
+                    }
+                },
+               "lat": {
                     "field":"latitude",
                     "lookup": ""
                 },
@@ -50,24 +64,10 @@
                     "field": "bbox",
                     "lookup": ""
                 },
-                "province": {
-                    "field": "province.code",
-                    "lookup": {
-                        "type": "table",
-                        "field": "description"
-                    }
-                },
                 "tag": [
                     {
                         "field": "location",
                         "lookup": ""
-                    },
-                    {
-                        "field": "generic.code",
-                        "lookup": {
-                            "type": "table",
-                            "field": "term"
-                        }
                     }
                 ]
             }

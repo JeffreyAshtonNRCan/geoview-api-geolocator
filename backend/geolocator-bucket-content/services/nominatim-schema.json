@@ -24,7 +24,22 @@
                     "range": "3"
                 }
             },
-            "lat": {
+            "province": {
+                "field": "display_name",
+                "lookup": {
+                    "type": "csv",
+                    "field": "province",
+                    "range": "3"
+                }
+            },
+            "category": {
+                "field": "category",
+                "lookup": {
+                    "type": "table",
+                    "field": "description"
+                }
+            },
+           "lat": {
                 "field":"lat",
                 "lookup": ""
             },
@@ -62,26 +77,11 @@
                     }
                 }
             ],
-            "province": {
-                "field": "display_name",
-                "lookup": {
-                    "type": "csv",
-                    "field": "province",
-                    "range": "3"
-                }
-            },
-            "tag":  [
+            "tag": [
                 {
-                    "field": "category",
-                    "lookup": ""
-                },
-                {
-                    "field": "category",
-                    "lookup": {
-                        "type": "table",
-                        "field": "description"
-                    }
-                }
+                "field": "category",
+                "lookup": ""
+              }
             ]
         }
     }

@@ -30,7 +30,13 @@
               "default" : "false",
               "description": "show fields that are null or undefined"
             },
-           "keys": {
+            "table": {
+              "type": "string",
+              "enum": ["category", "component", "generic", "province", "tableurl", "none"],
+              "default" : "none",
+              "description": "return json dump of table"
+            },
+          "keys": {
               "type": "array",
               "uniqueItems": true,
               "items": {

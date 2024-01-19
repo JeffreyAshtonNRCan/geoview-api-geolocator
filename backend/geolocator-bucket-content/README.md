@@ -19,6 +19,9 @@ The __input__ schema identifies the expected parameters to query the API.
     - "keys": The list of supported API key to query. Optional parameter, if missing, all
             supported key will be queryied. Every time we support a new API or services, a new key will be added to this array of accepted values.
     - "debug": Show null or undefined fields with associated key (true or false)
+    - "table": optional parameter to return json dump of table created from csv files.
+            Default: none
+            Values: category, component, province, generic and tableurl
 
 The __output__ schemas validates the obtained values match type and limits for each field.
     - "key": The service Id for the source of the data

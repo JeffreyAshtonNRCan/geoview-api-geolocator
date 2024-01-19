@@ -49,36 +49,41 @@ def handler(event, context):
     keys = params_full_list.pop("keys")
     lang = params_full_list.get("lang")
     debug = params_full_list.pop("debug")
+    table_parameter = params_full_list.pop("table")
     if debug == 'true':
         debug = True
     else:
         debug = False
-    # Only required for lookup tables
-    table_update = {'generic': {}, 'province': {}}  # missing codes from tables
-    table_params = (tables, lang, table_update)
-    # services to call
-    for service_id in keys:
-        # The schema for this service
-        service_schema = schemas.get(service_id)
-        # Adjust the parameters to the service's schema
-        url, params = assemble_url(service_schema, params_full_list.copy())
-        # At this point the query must be complete
-        service_load = url_request(url, params)
-        # At this point is where the 'out' part of each model applies
-        items = items_from_service(service_id,
-                                   table_params,
-                                   service_schema,
-                                   output_schema_items,
-                                   service_load,
-                                   item_keys,
-                                   debug)
-        loads.extend(items)
+    # if table url parameter set, return table
+    if table_parameter != 'none':
+        loads = tables[table_parameter]
+    else:
+        # Only required for lookup tables
+        table_update = {'generic': {}, 'province': {}}  # missing codes from tables
+        table_params = (tables, lang, table_update)
+        # services to call
+        for service_id in keys:
+            # The schema for this service
+            service_schema = schemas.get(service_id)
+            # Adjust the parameters to the service's schema
+            url, params = assemble_url(service_schema, params_full_list.copy())
+            # At this point the query must be complete
+            service_load = url_request(url, params)
+            # At this point is where the 'out' part of each model applies
+            items = items_from_service(service_id,
+                                       table_params,
+                                       service_schema,
+                                       output_schema_items,
+                                       service_load,
+                                       item_keys,
+                                       debug)
+            loads.extend(items)
 
-    # write csv files if table updated
-    for table_name in table_update:
-        if any(table_update[table_name]):
-            print(table_name, ' table updates:', table_update[table_name])
-            geolocator.write_table(table_name, tables)
+        # write csv files if table updated
+        for table_name in table_update:
+            if any(table_update[table_name]):
+                print(table_name, ' table updates:', table_update[table_name])
+                geolocator.write_table(table_name, tables)
 
     response = {
         "statusCode": 200,

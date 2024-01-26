@@ -44,7 +44,7 @@ def handler(event, context):
     try:
         params_full_list = validate_querystring_against_schema(event,in_api_schema)
     except MissingParameterException as e:
-        response = {"statusCode": 200, "body": '{"message_en": "Mandatory \'/?q=\' parameter not provided", "message_fr": "Paramètre obligatoire \'/?q=\' non fourni"}'}
+        response = {"statusCode": 200, "body": '{"message_en": "Mandatory \'/?q= or table=\' parameter not provided", "message_fr": "Paramètre obligatoire \'/?q= or table=\' non fourni"}'}
         return response    
     keys = params_full_list.pop("keys")
     lang = params_full_list.get("lang")

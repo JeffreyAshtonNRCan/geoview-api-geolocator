@@ -34,7 +34,7 @@
                     "field": "component.generic",
                     "lookup": {
                         "type": "type",
-                        "field": "tag"
+                        "field": "category"
                     }
                 },
                 "lat": {

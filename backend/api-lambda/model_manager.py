@@ -49,10 +49,7 @@ def get_from_table(table_params, field, lookup, item):
     table_name = field.split('.')[0]
     code = get_from_schema(field, item)
     if code is None:
-        return UNDEFINED
-    # category table lookup french only (nominatim key)
-    if table_name == 'category' and lang == 'en':
-        return code.capitalize()
+        return function_undefined(code, table_name)
 
     codes = code.split(',') # in rare cases 2 values
     for code in codes:
@@ -66,7 +63,7 @@ def get_from_table(table_params, field, lookup, item):
     term = {'en' : term_en, 'fr' : term_fr}
 
     # add missing code to table
-    if term_en != UNDEFINED and term_fr != UNDEFINED:
+    if UNDEFINED not in term_en and UNDEFINED not in term_fr:
         tables[table_name][code] = term
         table_update[table_name][code] = term
 
@@ -86,7 +83,7 @@ def get_table_code(tables, table_name, lookup, code, lang):
     """
 
     if table_name not in service_tables:
-        return UNDEFINED
+        return function_undefined(code, table_name)
 
     if lang not in service_tables[table_name]:
         if 'tableurl' in tables:
@@ -98,10 +95,10 @@ def get_table_code(tables, table_name, lookup, code, lang):
             except Exception as error:
                 print("An exception occurred:", type(error).__name__)
                 print('Error=', error, ' url:', table_url)
-                return UNDEFINED
+                return function_undefined(code, table_name)
         else: 
             print('tableurl.csv missing from S3 bucket')
-            return UNDEFINED
+            return function_undefined(code, table_name)
 
     if 'definitions' in service_tables[table_name][lang]:
         definitions = service_tables[table_name][lang].get('definitions')
@@ -109,7 +106,7 @@ def get_table_code(tables, table_name, lookup, code, lang):
             if definition.get('code') == code:
                 return definition.get(lookup.get('field'))
 
-    return UNDEFINED
+    return function_undefined(code, table_name)
 
 def get_from_array(schema, lookup, item):
     """
@@ -188,9 +185,11 @@ def get_from_csv(table_params, field, lookup, item):
     item_list = item_value.split(',')
     search_field =  lookup.get("field")
     search_range =  int(lookup.get("range"))
+    table_name = None
 
     if search_field == 'province':
         if 'component' in tables:
+            table_name = 'component'
             item_list.reverse() # search from end of csv string
             provinces = tables.get('component')
             for province in provinces:
@@ -207,11 +206,11 @@ def get_from_csv(table_params, field, lookup, item):
             name = ','.join(name_list)
             return name
 
-    return UNDEFINED
+    return function_undefined(search_field, table_name)
 
 def get_from_type(table_params, field, lookup, item):
     """
-    Get name or tag depending on type field for locate key (Geoname, street, intersection, etc)
+    Get name or category depending on type field for locate key (Geoname, street, intersection, etc)
 
     Params:
       table_params:
@@ -222,7 +221,7 @@ def get_from_type(table_params, field, lookup, item):
       lookup: the lookup type (name or tag)
       item: the data record
     Return:
-        The location name or tag
+        The location name or category
     """
     tables, lang, table_update = table_params
     lookup_field = lookup.get("field")
@@ -243,19 +242,21 @@ def get_from_type(table_params, field, lookup, item):
                 streetname = streetname + ', ' + placename
             return streetname
 
-    # tag type
-    if item_type == 'Geoname':
-    # component.generic use generic lookup table
-        code = get_from_schema(field, item)
-        if code in tables.get('generic'):
-            return tables.get('generic').get(code).get(lang)
+    if lookup_field == 'category':
+        if item_type == 'Geoname':
+        # component.generic use generic lookup table
+            code = get_from_schema(field, item)
+            if code in tables.get('generic'):
+                return tables.get('generic').get(code).get(lang)
+            else:
+                return function_undefined(code, 'generic')
         else:
-            return UNDEFINED
-    else:
-        if item_type.lower() in tables.get('category'):
-            item_type = tables.get('category').get(item_type.lower()).get(lang)
-        return item_type
+            if item_type.lower() in tables.get('category'):
+                return tables.get('category').get(item_type.lower()).get(lang)
+            else:
+                return function_undefined(item_type, 'category')
 
+    return function_undefined(item_type, None)
 
 def function_error():
     """
@@ -271,6 +272,23 @@ def function_null():
         Null value 
     """
     return NULL
+
+def function_undefined(code, table_name):
+    """
+    Params:
+        code: the code not found
+        table_name: table searched for code
+    Return:
+        Undefined with code and table name
+    """
+    if code is None:
+        code = 'None'
+    if table_name is None:
+        table_name = ''
+    else:
+        table_name =  ' ' + table_name + ' table'
+
+    return UNDEFINED + ' ' + code + table_name
 
 def function_debug(result, debug, service):
     """
@@ -511,8 +529,9 @@ async def apply_service_schema(service,
         functions = functions_by_field.get(key)
         if len(functions) == 1:
             result = get_results(table_params, functions[0], data_item)
-            if result == NULL or result == UNDEFINED:
-                result = function_debug(result, debug, service)
+            if isinstance(result, str):
+                if result == NULL or UNDEFINED in result:
+                    result = function_debug(result, debug, service)
             item[key] = result
         else:
             result_list = []
@@ -520,8 +539,9 @@ async def apply_service_schema(service,
                 result = get_results(table_params,
                                      function_field,
                                      data_item)
-                if result == NULL or result == UNDEFINED:
-                    result = function_debug(result, debug, service)
+                if isinstance(result, str):
+                    if result == NULL or UNDEFINED in result:
+                        result = function_debug(result, debug, service)
                 result_list.append(result)
             item[key] = result_list
 
@@ -608,13 +628,12 @@ def items_from_service(service,
                                      data_item,
                                      debug))
 
-            # check for duplicate item (name, province and tag)
-            item_name = item['name']
-            if item_name in item_keys:
-                if item_keys[item_name]['province'] == item['province'] and \
-                   item_keys[item_name]['tag'] == item['tag'] :
+            # check for duplicate item (name, province and category)
+            item_name_prov = item['name'] + item['province']
+            if item_name_prov in item_keys:
+                if item_keys[item_name_prov] == item['category']:
                     continue
-            item_keys[item_name] = {'province': item['province'], 'tag': item['tag']}
+            item_keys[item_name_prov] = item['category']
 
             # Add the item to the list for the next process
             list_to_process.append((output_schema, item))

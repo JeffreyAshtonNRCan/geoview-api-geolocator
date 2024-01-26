@@ -13,12 +13,26 @@ def validate_required_parameters_with_schema(schema, parameters):
     """
     schema_properties = schema["properties"]
     schema_required = schema["required"]
+    missing_parameters = False
+    required_all = True
+    if "requiredAll" in schema:
+        required_all = False # only one required parameter mandatory
+    error_message = ''
+
     for require in schema_required:
-        if not parameters.get(require):
-            error_message = f"inexistent parameter '{require}'"
-            raise MissingParameterException(error_message)
-        schema_params = schema_properties[require]
-        url_params = parameters[require]
+        if parameters.get(require):
+            schema_params = schema_properties[require]
+            url_params = parameters[require]
+            if not required_all:
+                missing_parameters = False
+                break
+        else:
+           error_message = error_message + f"inexistent parameter '{require}'"
+           missing_parameters = True
+
+    if missing_parameters:
+        raise MissingParameterException(error_message)
+
     return url_params, schema_params
 
 def get_params_default(params, schema):

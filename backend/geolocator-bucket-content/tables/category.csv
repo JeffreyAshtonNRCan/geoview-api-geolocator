@@ -1,12 +1,16 @@
 code,en,fr
+aerialway,Aerialway,Voie aérienne
 aeroway,Aeroway,Aéroparc
 amenity,Amenity,Commodité
 boundary,Boundary,Limite
 building,Building,Bâtiment
 city,City,Ville
 highway,Highway,Autoroute
+intersection,Intersection,Intersection
+landuse,Land use,Utilisation des terres
 leisure,Leisure,Loisirs
 natural,Natural,Naturel
+nts,NTS,NTS
 place,Place,Lieu
 postalcode,Postal Code,Code postal
 shop,Shop,Magasin

@@ -16,6 +16,7 @@
           "properties": {
             "q": {
               "type": "string",
+              "default": "none",
               "description": "The query to parse and send to supported API's."
             },
             "lang": {
@@ -46,7 +47,8 @@
               "description": "The list of supported API key to query. Optional parameter, if missing, all supported key will be query."
             }
           },
-          "required": ["q"],
+          "required": ["q","table"],
+          "requiredAll": "false",
           "additionalProperties": false
         }
       },

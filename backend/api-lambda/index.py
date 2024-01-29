@@ -48,12 +48,10 @@ def handler(event, context):
         return response    
     keys = params_full_list.pop("keys")
     lang = params_full_list.get("lang")
-    debug = params_full_list.pop("debug")
     table_parameter = params_full_list.pop("table")
-    if debug == 'true':
-        debug = True
-    else:
-        debug = False
+    dev = params_full_list.pop("dev")
+    dev = True if dev == 'true'  else False
+
     # if table url parameter set, return table
     if table_parameter != 'none':
         loads = tables[table_parameter]
@@ -76,7 +74,7 @@ def handler(event, context):
                                        output_schema_items,
                                        service_load,
                                        item_keys,
-                                       debug)
+                                       dev)
             loads.extend(items)
 
         # write csv files if table updated

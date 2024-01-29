@@ -25,7 +25,7 @@
               "default" : "en",
               "description": "The language on wich to filter the query."
             },
-            "debug": {
+            "dev": {
               "type": "string",
               "enum": ["true", "false"],
               "default" : "false",

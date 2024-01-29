@@ -286,21 +286,21 @@ def function_undefined(code, table_name):
     if table_name is None:
         table_name = ''
     else:
-        table_name =  ' ' + table_name + ' table'
+        table_name =  ': ' + table_name + ' table'
 
     return UNDEFINED + ' ' + code + table_name
 
-def function_debug(result, debug, service):
+def function_dev(result, dev, service):
     """
     Params:
         result: string containing NULL or UNDEFINED
         service: service key 
-        debug: url parameter, true or false
+        dev: url parameter, true or false
    Return:
-        debug true: result + service key
-        debug false: empty string
+        dev true: result + service key
+        dev false: empty string
     """
-    if debug:
+    if dev:
         return result + ' (' + service + ' key)'
     else:
         return ''
@@ -508,7 +508,7 @@ async def apply_service_schema(service,
                                table_params,
                                functions_by_field,
                                data_item,
-                               debug):
+                               dev):
     """
     Extract the required information from each item based on the service model
 
@@ -519,7 +519,7 @@ async def apply_service_schema(service,
         lang: The lang for the search
       function_by_field: the list of field functions
       data_item: The item to be affected by the functions
-      debug: url parameter to show null and undefined
+      dev: url parameter to show null and undefined
 
     Return: A restructured new item matching the output requirements
     """
@@ -531,7 +531,7 @@ async def apply_service_schema(service,
             result = get_results(table_params, functions[0], data_item)
             if isinstance(result, str):
                 if result == NULL or UNDEFINED in result:
-                    result = function_debug(result, debug, service)
+                    result = function_dev(result, dev, service)
             item[key] = result
         else:
             result_list = []
@@ -541,7 +541,7 @@ async def apply_service_schema(service,
                                      data_item)
                 if isinstance(result, str):
                     if result == NULL or UNDEFINED in result:
-                        result = function_debug(result, debug, service)
+                        result = function_dev(result, dev, service)
                 result_list.append(result)
             item[key] = result_list
 
@@ -593,7 +593,7 @@ def items_from_service(service,
                        output_schema,
                        load,
                        item_keys,
-                       debug):
+                       dev):
     """
     Based on the output schema and api-out schema, return the formated
     data using multiprocessing to accelerate the task
@@ -608,7 +608,7 @@ def items_from_service(service,
                        prescence of 'required' fields in the data layer
       load: The input set of data items
       item_keys: name, province and tag for each output item
-      debug: url parameter to show null and undefined
+      dev: url parameter to show null and undefined
 
     Return: A set of output items standarized and validated
     """
@@ -626,7 +626,7 @@ def items_from_service(service,
                                      table_params,
                                      functions_by_field,
                                      data_item,
-                                     debug))
+                                     dev))
 
             # check for duplicate item (name, province and category)
             item_name_prov = item['name'] + item['province']

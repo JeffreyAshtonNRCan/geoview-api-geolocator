@@ -18,7 +18,7 @@ The __input__ schema identifies the expected parameters to query the API.
     - "lang": The language on wich to filter the query (fr or en).
     - "keys": The list of supported API key to query. Optional parameter, if missing, all
             supported key will be queryied. Every time we support a new API or services, a new key will be added to this array of accepted values.
-    - "debug": Show null or undefined fields with associated key (true or false)
+    - "dev": Show null or undefined fields with key and table name if applicable (true or false)
     - "table": optional parameter to return json dump of table created from csv files.
             Default: none
             Values: category, component, province, generic and tableurl

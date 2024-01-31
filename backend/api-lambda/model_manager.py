@@ -100,11 +100,22 @@ def get_table_code(tables, table_name, lookup, code, lang):
             print('tableurl.csv missing from S3 bucket')
             return function_undefined(code, table_name)
 
+    new_term = None
     if 'definitions' in service_tables[table_name][lang]:
         definitions = service_tables[table_name][lang].get('definitions')
         for definition in definitions:
+            definition_code = definition.get('code')
+            if definition_code in tables.get(table_name):
+                # update existing code
+                if definition.get(lookup.get('field')) != tables[table_name][definition_code][lang]:
+                    print ('update code=', definition_code, ' new term=', definition.get(lookup.get('field')),
+                           ' old term=', tables[table_name][definition_code][lang])
+                    tables[table_name][definition_code][lang] = definition.get(lookup.get('field'))
+            # missing code
             if definition.get('code') == code:
-                return definition.get(lookup.get('field'))
+                new_term = definition.get(lookup.get('field'))
+        if new_term is not None:
+            return new_term
 
     return function_undefined(code, table_name)
 

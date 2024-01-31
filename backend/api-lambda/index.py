@@ -50,7 +50,7 @@ def handler(event, context):
     lang = params_full_list.get("lang")
     table_parameter = params_full_list.pop("table")
     dev = params_full_list.pop("dev")
-    dev = True if dev == 'true'  else False
+    dev = True if dev == 'true' else False
 
     # if table url parameter set, return table
     if table_parameter != 'none':

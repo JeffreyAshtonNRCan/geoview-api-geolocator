@@ -9,6 +9,7 @@ highway,Highway,Autoroute
 intersection,Intersection,Intersection
 landuse,Land use,Utilisation des terres
 leisure,Leisure,Loisirs
+man_made,Man made,Élément anthropique
 natural,Natural,Naturel
 nts,NTS,NTS
 place,Place,Lieu

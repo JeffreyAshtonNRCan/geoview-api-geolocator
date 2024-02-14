@@ -193,31 +193,52 @@ def get_from_csv(table_params, field, lookup, item):
     """
     tables, lang, table_update = table_params
     item_value = get_from_schema(field, item)
+
+    # nominatim key standardize NL French province name
+    if lang == 'fr':
+        if 'Terre-Neuve et Labrador' in item_value:
+            item_value = item_value.replace('Terre-Neuve et Labrador','Terre-Neuve-et-Labrador')
+
     item_list = item_value.split(',')
     search_field =  lookup.get("field")
     search_range =  int(lookup.get("range"))
-    table_name = None
 
     if search_field == 'province':
-        if 'component' in tables:
-            table_name = 'component'
-            item_list.reverse() # search from end of csv string
-            provinces = tables.get('component')
-            for province in provinces:
-                province_name = provinces.get(province).get(lang)
-                if province_name:
-                    for key in range(search_range):
-                        if key < len(item_list):
-                            if province_name in item_list[key]:
-                                return province_name
+        return find_prov(item_list, search_field, search_range, lang, tables.get('province'))
 
     if search_field == 'name':
-        if search_range <= len(item_list):
-            name_list = item_list[:search_range]  # list slice
-            name = ','.join(name_list)
-            return name
+        name_list = item_list[:search_range]  # list slice
+        # check if last element of name is a province
+        if UNDEFINED not in find_prov(name_list, search_field, 1, lang, tables.get('province')):
+           name_list.pop() # remove province
+        name = ','.join(name_list)
+        return name
 
-    return function_undefined(search_field, table_name)
+    return function_undefined(search_field, None)
+
+def find_prov(search_list, search_field, search_range, lang, provinces):
+    """
+    Search for province in list
+    Params:
+      search_list: list to search
+      search_field: Province or name
+      search_range: the number of list items to search
+      lang: the lang for the search
+      provinces: province table
+    Return:
+        The province name
+    """
+    reversed_list = search_list[::-1] # search from end of list
+
+    for province in provinces:
+        province_name = provinces.get(province).get(lang)
+        if province_name:
+            for key in range(search_range):
+                if key < len(reversed_list):
+                    if province_name in reversed_list[key]:
+                        return province_name
+
+    return function_undefined(search_field, 'province')
 
 def get_from_type(table_params, field, lookup, item):
     """

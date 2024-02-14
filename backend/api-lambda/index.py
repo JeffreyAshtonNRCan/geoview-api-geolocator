@@ -58,6 +58,9 @@ def handler(event, context):
     table_parameter = params_full_list.pop("table")
     dev = params_full_list.pop("dev")
     dev = True if dev == 'true' else False
+    # Only required for lookup tables
+    table_update = {'generic': {}, 'province': {}}  # missing codes from tables
+    table_params = (tables, lang, table_update)
 
     # if table url parameter set, return table
     if table_parameter != 'none':
@@ -67,9 +70,6 @@ def handler(event, context):
         if cached_result(q, lang, keys, dev, date_time):
             loads = cache.get(q_lang).get('loads')
         else:
-            # Only required for lookup tables
-            table_update = {'generic': {}, 'province': {}}  # missing codes from tables
-            table_params = (tables, lang, table_update)
             # services to call
             for service_id in keys:
                 # The schema for this service
@@ -148,14 +148,14 @@ def q_alphanumeric(q):
     Verify q parameter:
         - alphanumeric
         - + or * characters allowed
-        - length > 2 and < 30
+        - length > 0 and < 30
     """
 
     q = q.replace('+', '')
     q = q.replace('*', '')
 
     if (q.isalnum()):
-        if len(q) > 2 and len(q) < 30:
+        if len(q) > 0 and len(q) < 30:
             return True
 
     return False

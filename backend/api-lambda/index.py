@@ -51,6 +51,7 @@ def handler(event, context):
     except MissingParameterException as e:
         response = {"statusCode": 200, "body": '{"message_en": "Mandatory \'/?q= or table=\' parameter not provided", "message_fr": "Paramètre obligatoire \'/?q= or table=\' non fourni"}'}
         return response
+
     q = params_full_list.get("q")
     keys = params_full_list.pop("keys")
     lang = params_full_list.get("lang")
@@ -71,25 +72,34 @@ def handler(event, context):
             loads = cache.get(q_lang).get('loads')
         else:
             # services to call
+            response_ok = True
             for service_id in keys:
                 # The schema for this service
                 service_schema = schemas.get(service_id)
                 # Adjust the parameters to the service's schema
-                url, params = assemble_url(service_schema, params_full_list.copy())
+                url, params, code_table_urls = assemble_url(service_schema, params_full_list.copy())
+                if code_table_urls:
+                    tables.update(code_table_urls) # add urls to table
                 # At this point the query must be complete
-                service_load = url_request(url, params)
-                # At this point is where the 'out' part of each model applies
-                items = items_from_service(service_id,
-                                           table_params,
-                                           service_schema,
-                                           output_schema_items,
-                                           service_load,
-                                           item_keys,
-                                           dev)
-                loads.extend(items)
+                service_load = url_request(url, params,service_id)
+                # check response status
+                if 'key' in service_load and service_load.get('key') == 'unsuccess':
+                    response_ok = False
+                    if dev:
+                        loads = [service_load] + loads  # add message to beginning
+                else:
+                    # At this point is where the 'out' part of each model applies
+                    items = items_from_service(service_id,
+                                               table_params,
+                                               service_schema,
+                                               output_schema_items,
+                                               service_load,
+                                               item_keys,
+                                               dev)
+                    loads.extend(items)
 
             # add query result to cache
-            if q_alphanumeric(q):
+            if q_alphanumeric(q) and response_ok:
                 cache.update({q_lang: {'datetime': str(date_time), 'keys': keys, 'dev': dev, 'loads': loads }})
 
             # write csv files if table updated

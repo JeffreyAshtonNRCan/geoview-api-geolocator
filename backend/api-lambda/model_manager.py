@@ -74,30 +74,28 @@ def get_table_code(tables, table_name, lookup, code, lang):
     get missing code definition from service url
     Params:
       tables: The lookup tables
-      table_name: name of table, generic, province or tableurl
+      table_name: name of table, generic or province
       lookup: type and field source (description or term)
       code: The missing code
       lang: The lang of the missing code
     Return:
         The term or description of the missing code for the lang 
     """
-
     if table_name not in service_tables:
         return function_undefined(code, table_name)
 
     if lang not in service_tables[table_name]:
-        if 'tableurl' in tables:
-            table_url = tables.get('tableurl').get(table_name).get(lang)
+        if 'code_table_urls' in tables:
+            table_url = tables.get('code_table_urls').get(table_name).get(lang)
             print(table_name, 'table', lang, 'update url=', table_url)
             try:
                 params = None
-                service_tables[table_name][lang] = url_request(table_url, params)
+                service_tables[table_name][lang] = url_request(table_url, params, '')
             except Exception as error:
                 print("An exception occurred:", type(error).__name__)
                 print('Error=', error, ' url:', table_url)
                 return function_undefined(code, table_name)
-        else: 
-            print('tableurl.csv missing from S3 bucket')
+        else:
             return function_undefined(code, table_name)
 
     new_term = None
@@ -639,7 +637,7 @@ def items_from_service(service,
       schema_required: The section of the out-api schema to validate the
                        prescence of 'required' fields in the data layer
       load: The input set of data items
-      item_keys: name, province and tag for each output item
+      item_keys: name, province and category for each output item
       dev: url parameter to show null and undefined
 
     Return: A set of output items standarized and validated

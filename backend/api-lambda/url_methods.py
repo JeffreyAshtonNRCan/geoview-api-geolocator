@@ -47,7 +47,7 @@ def get_from_url(schema, data):
     """
     field = schema.get("lookup").get("field")
     url = get_url_from_field(schema, data)
-    load = url_request(url, {})
+    load = url_request(url, {}, '')
     return get_from_field(field, load)
 
 def replace_url_with_params(url, params, params_list):
@@ -80,12 +80,39 @@ def assemble_url(schema, params):
     Return: The assembled url including parameters as is required by the
              service schema.
     """
+
+    # urls to update province and generic code tables
+    code_table_urls = {'generic': {}, 'province': {}}
+
     # 1. Extract url and parameters from json
     url = schema.get("url")
     url_params = schema.get("urlParams")
+    url_code_tables = schema.get("urlCodeTables")
+    if url_code_tables:
+        url_province = schema.get("urlCodeTables").get("province").get("url")
+        url_generic = schema.get("urlCodeTables").get("generic").get("url")
+    else:
+        code_table_urls = None
+
     # 2. Parameters to modify the url
     if url_params:
         url = replace_url_with_params(url, url_params, params)
+
+    # modify province and generic url by language
+    if url_code_tables:
+        if url_province:
+            lang_en = {'lang' : 'en'}
+            lang_fr = {'lang' : 'fr'}
+            code_table_urls['province']['en'] = replace_url_with_params(url_province, url_params, lang_en)
+            code_table_urls['province']['fr'] = replace_url_with_params(url_province, url_params, lang_fr)
+        if url_generic:
+            lang_en = {'lang' : 'en'}
+            lang_fr = {'lang' : 'fr'}
+            code_table_urls['generic']['en'] = replace_url_with_params(url_generic, url_params, lang_en)
+            code_table_urls['generic']['fr'] = replace_url_with_params(url_generic, url_params, lang_fr)
+        code_table_urls = {'code_table_urls': code_table_urls}
+
+
     # 3. lookup in parameters to replace with
     qry_params_dict = params
     lookup_in = schema.get("lookup").get("in")
@@ -93,19 +120,22 @@ def assemble_url(schema, params):
         for in_param in lookup_in:
             if in_param in params:
                 qry_params_dict[lookup_in.get(in_param)] = params.pop(in_param)
+
     # 4. static parameters
     static_params = schema.get("staticParams")
     if static_params:
         qry_params_dict.update(static_params)
-    return url, qry_params_dict
 
-def url_request(url, params):
+    return url, qry_params_dict, code_table_urls
+
+def url_request(url, params, service_id):
     """
     Calls a REST service passing the url
 
     Params:
       url: The url for the REST call
       params: The params to pass along with the url
+      service_id: key of the service
 
     Return: The response from the call.
     """
@@ -113,5 +143,14 @@ def url_request(url, params):
     request = Request('GET', url, params=params)
     prepared_request = request.prepare()
     query_response = s.send(prepared_request)
-    json_response = query_response.json()
+
+    # check response successful (200)
+    if query_response.status_code == 200:
+        json_response = query_response.json()
+    else:
+        name = 'Service unavailable: ' + service_id
+        category = 'Response code: ' + str(query_response.status_code)
+        response_dict = {'key': 'unsuccess', 'name': name  , 'province': '', 'category': category}
+        return response_dict
+
     return json_response

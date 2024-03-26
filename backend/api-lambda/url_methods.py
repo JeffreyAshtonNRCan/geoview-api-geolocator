@@ -89,8 +89,10 @@ def assemble_url(schema, params):
     url_params = schema.get("urlParams")
     url_code_tables = schema.get("urlCodeTables")
     if url_code_tables:
-        url_province = schema.get("urlCodeTables").get("province").get("url")
-        url_generic = schema.get("urlCodeTables").get("generic").get("url")
+        province_url    = schema.get("urlCodeTables").get("province").get("url")
+        generic_url     = schema.get("urlCodeTables").get("generic").get("url")
+        province_field  = schema.get("urlCodeTables").get("province").get("fields").get("description")
+        generic_field   = schema.get("urlCodeTables").get("generic").get("fields").get("description")
     else:
         code_table_urls = None
 
@@ -100,16 +102,18 @@ def assemble_url(schema, params):
 
     # modify province and generic url by language
     if url_code_tables:
-        if url_province:
+        if province_url:
             lang_en = {'lang' : 'en'}
             lang_fr = {'lang' : 'fr'}
-            code_table_urls['province']['en'] = replace_url_with_params(url_province, url_params, lang_en)
-            code_table_urls['province']['fr'] = replace_url_with_params(url_province, url_params, lang_fr)
-        if url_generic:
+            code_table_urls['province']['en'] = replace_url_with_params(province_url, url_params, lang_en)
+            code_table_urls['province']['fr'] = replace_url_with_params(province_url, url_params, lang_fr)
+            code_table_urls['province']['field'] = province_field
+        if generic_url:
             lang_en = {'lang' : 'en'}
             lang_fr = {'lang' : 'fr'}
-            code_table_urls['generic']['en'] = replace_url_with_params(url_generic, url_params, lang_en)
-            code_table_urls['generic']['fr'] = replace_url_with_params(url_generic, url_params, lang_fr)
+            code_table_urls['generic']['en'] = replace_url_with_params(generic_url, url_params, lang_en)
+            code_table_urls['generic']['fr'] = replace_url_with_params(generic_url, url_params, lang_fr)
+            code_table_urls['generic']['field'] = generic_field
         code_table_urls = {'code_table_urls': code_table_urls}
 
 

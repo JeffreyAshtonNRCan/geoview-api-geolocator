@@ -29,7 +29,7 @@ def get_from_schema(schema, item):
             return None
     return item
 
-def get_from_table(table_params, field, lookup, item):
+def get_from_table(table_params, field, item):
     """
     Get the data value asociated with an specific field from a table inside the
     model
@@ -40,7 +40,6 @@ def get_from_table(table_params, field, lookup, item):
         lang: The lang for the search
         table_update: missing codes to update
       field: the nested fields to access the code
-      lookup: type and field source to update (description or term)
       item: the data record
     Return:
         The string corresponding to that table, code, language
@@ -58,8 +57,8 @@ def get_from_table(table_params, field, lookup, item):
 
     # missing code in table
     print('missing code=', code, ' lang=', lang, 'field=', field, 'item=', item)
-    term_en = get_table_code(tables, table_name, lookup, code, 'en')
-    term_fr = get_table_code(tables, table_name, lookup, code, 'fr')
+    term_en = get_table_code(tables, table_name, code, 'en')
+    term_fr = get_table_code(tables, table_name, code, 'fr')
     term = {'en' : term_en, 'fr' : term_fr}
 
     # add missing code to table
@@ -69,13 +68,12 @@ def get_from_table(table_params, field, lookup, item):
 
     return term.get(lang)
 
-def get_table_code(tables, table_name, lookup, code, lang):
+def get_table_code(tables, table_name, code, lang):
     """
     get missing code definition from service url
     Params:
       tables: The lookup tables
       table_name: name of table, generic or province
-      lookup: type and field source (description or term)
       code: The missing code
       lang: The lang of the missing code
     Return:
@@ -86,8 +84,9 @@ def get_table_code(tables, table_name, lookup, code, lang):
 
     if lang not in service_tables[table_name]:
         if 'code_table_urls' in tables:
-            table_url = tables.get('code_table_urls').get(table_name).get(lang)
-            print(table_name, 'table', lang, 'update url=', table_url)
+            table_url   = tables.get('code_table_urls').get(table_name).get(lang)
+            table_field = tables.get('code_table_urls').get(table_name).get('field')
+            print(table_name, 'table', lang, 'update url=', table_url, ' fieldname:', table_field)
             try:
                 params = None
                 service_tables[table_name][lang] = url_request(table_url, params, '')
@@ -105,13 +104,13 @@ def get_table_code(tables, table_name, lookup, code, lang):
             definition_code = definition.get('code')
             if definition_code in tables.get(table_name):
                 # update existing code
-                if definition.get(lookup.get('field')) != tables[table_name][definition_code][lang]:
-                    print ('update code=', definition_code, ' new term=', definition.get(lookup.get('field')),
+                if definition.get(table_field) != tables[table_name][definition_code][lang]:
+                    print ('update code=', definition_code, ' new term=', definition.get(table_field),
                            ' old term=', tables[table_name][definition_code][lang])
-                    tables[table_name][definition_code][lang] = definition.get(lookup.get('field'))
+                    tables[table_name][definition_code][lang] = definition.get(table_field)
             # missing code
             if definition.get('code') == code:
-                new_term = definition.get(lookup.get('field'))
+                new_term = definition.get(table_field)
         if new_term is not None:
             return new_term
 
@@ -392,7 +391,6 @@ def get_results(table_params, function_field, item):
         lookup = item_schema.get("lookup")
         return function(table_params,
                         item_schema.get("field"),
-                        lookup,
                         item)
     elif "get_from_array" in function.__name__:
         field = item_schema.get("field")

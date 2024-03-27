@@ -657,11 +657,10 @@ def items_from_service(service,
                                      dev))
 
             # check for duplicate item (name, province and category)
-            item_name_prov = item['name'] + item['province']
-            if item_name_prov in item_keys:
-                if item_keys[item_name_prov] == item['category']:
-                    continue
-            item_keys[item_name_prov] = item['category']
+            item_name_prov_cat = item['name'] + item['province'] + item['category']
+            if item_name_prov_cat in item_keys:
+                continue
+            item_keys[item_name_prov_cat] = ''  # add to item_keys
 
             # Add the item to the list for the next process
             list_to_process.append((output_schema, item))
